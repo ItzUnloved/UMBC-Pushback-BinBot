@@ -1,3 +1,4 @@
+opcontrol.cpp
 /**
  * \file opcontrol.cpp
  *
@@ -29,6 +30,8 @@ using namespace std;
 // motor ports
 #define LEFT_MOTOR_PORTS    {2, -4} // ports for left drive 
 #define RIGHT_MOTOR_PORTS   {7, -6} // ports for right motors
+
+#define DESCORE_MOTOR 10
  
  
 void umbc::Robot::opcontrol() {
@@ -44,9 +47,10 @@ void umbc::Robot::opcontrol() {
 
     //right drive
     MotorGroup drive_right(RIGHT_MOTOR_PORTS);
-    drive_right.set_brake_modes(E_MOTOR_BRAKE_COAST);
-    drive_right.set_gearing(E_MOTOR_GEAR_GREEN);         
- 
+    drive_right.set_brake_modes(E_MOTOR_BRAKE_BRAKE);
+    drive_right.set_gearing(E_MOTOR_GEAR_GREEN);
+
+    Motor descore_motor = Motor(DESCORE_MOTOR);
     // opcontrol loop
     while(true) {   
  
@@ -54,11 +58,31 @@ void umbc::Robot::opcontrol() {
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_RIGHT_X);
 
+        if((arcade_x < 25) && (arcade_x > -25)){ //deadzones
+            arcade_x = 0;
+        }
+        if((arcade_y < 25) && (arcade_y > -25)){
+            arcade_y = 0;
+        }
         // calculate velocity for left drive
         int32_t drive_left_velocity = (arcade_y - arcade_x) * MOTOR_GREEN_GEAR_MULTIPLIER / E_CONTROLLER_ANALOG_MAX ;
 
         // calculate velocity for right drive
         int32_t drive_right_velocity = (arcade_y + arcade_x) * MOTOR_GREEN_GEAR_MULTIPLIER / E_CONTROLLER_ANALOG_MAX;
+            
+        if(controller_master->get_digital(E_CONTROLLER_DIGITAL_X)){ 
+            descore_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+        }
+        //controls descore
+        if(controller_master->get_digital(E_CONTROLLER_DIGITAL_Y)){
+            descore_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+        }
+        //condition if both are not pressed or are both pressed at the same time
+        if((!(controller_master->get_digital(E_CONTROLLER_DIGITAL_Y)) && !(controller_master->get_digital(E_CONTROLLER_DIGITAL_X))) 
+        || (controller_master->get_digital(E_CONTROLLER_DIGITAL_Y)) && (controller_master->get_digital(E_CONTROLLER_DIGITAL_X)))
+        {
+            descore_motor.move_velocity(0);
+        }
 
         // set drive velocity
         drive_left.move_velocity(drive_left_velocity);
@@ -66,5 +90,5 @@ void umbc::Robot::opcontrol() {
 
         // required loop delay (do not edit)
         pros::Task::delay(this->opcontrol_delay_ms);
-     }
- }
+    }
+}
