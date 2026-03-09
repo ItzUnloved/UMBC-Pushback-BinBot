@@ -29,7 +29,7 @@ using namespace std;
 // motor ports
 #define LEFT_MOTOR_PORTS    {2, -4} // ports for left drive 
 #define RIGHT_MOTOR_PORTS   {7, -6} // ports for right motors
-#define LIFT    9 //
+ 
  
 void umbc::Robot::opcontrol() {
  
@@ -46,35 +46,23 @@ void umbc::Robot::opcontrol() {
     MotorGroup drive_right(RIGHT_MOTOR_PORTS);
     drive_right.set_brake_modes(E_MOTOR_BRAKE_COAST);
     drive_right.set_gearing(E_MOTOR_GEAR_GREEN);         
-    
-    //Descore Lift
-    MotorGroup lift_up(LIFT)
-    lift_up.set_brake_modes(E_MOTOR_BRAKE_COAST)
-    lift_up.set_gearing(E_MOTOR_GEAR_BLUE)
-
-
+ 
     // opcontrol loop
     while(true) {   
  
         // getting the values from the controller
         int32_t arcade_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t arcade_x = controller_master->get_analog(E_CONTROLLER_ANALOG_RIGHT_X);
-        int32_t lift_x = controller_master->get_analog(E_CONTROLLER_DIGITAL_X)
+
         // calculate velocity for left drive
         int32_t drive_left_velocity = (arcade_y - arcade_x) * MOTOR_GREEN_GEAR_MULTIPLIER / E_CONTROLLER_ANALOG_MAX ;
 
         // calculate velocity for right drive
         int32_t drive_right_velocity = (arcade_y + arcade_x) * MOTOR_GREEN_GEAR_MULTIPLIER / E_CONTROLLER_ANALOG_MAX;
 
-        // calculate velocity of lift
-        int32_t lift = MOTOR_BLUE_GEAR_MULTIPLIER;
-
         // set drive velocity
         drive_left.move_velocity(drive_left_velocity);
         drive_right.move_velocity(drive_right_velocity);
-
-        // set lift Velocity
-        lift_up.move_velocity(lift)
 
         // required loop delay (do not edit)
         pros::Task::delay(this->opcontrol_delay_ms);
